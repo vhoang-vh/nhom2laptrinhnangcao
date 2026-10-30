@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: rentify-api
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/rentify?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:rentify}
+    password: ${DB_PASSWORD:rentify}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    default-property-inclusion: non_null
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  admin:
+    email: ${ADMIN_EMAIL:admin@rentify.local}
+    password: ${ADMIN_PASSWORD:Admin123!ChangeMe}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
