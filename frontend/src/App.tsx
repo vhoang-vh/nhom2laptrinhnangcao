@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getUser } from "./services/auth";
 import AdminDashboard from "./pages/AdminDashboard";
+import Deposit from "./pages/Deposit";
 import LandlordDashboard from "./pages/LandlordDashboard";
 import Login from "./pages/Login";
 import PendingApproval from "./pages/PendingApproval";
@@ -64,6 +65,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<TenantHome />} />
         <Route path="/rooms/:id" element={<RoomDetail />} />
+        <Route path="/deposit" element={<Deposit />} />
         <Route path="/login" element={<AuthOverlay mode="login" />} />
         <Route path="/register" element={<AuthOverlay mode="register" />} />
         <Route path="/pending-approval" element={<PendingApproval />} />

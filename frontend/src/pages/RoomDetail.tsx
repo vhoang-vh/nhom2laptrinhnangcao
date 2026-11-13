@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getErrorMessage } from "../services/api";
 import { getUser } from "../services/auth";
-import { createBooking, getRoom } from "../services/rentify";
+import { getRoom } from "../services/rentify";
 import type { Room } from "../types";
 
 const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 });
@@ -24,22 +24,24 @@ function getRoomImage(room: Room) {
 
 export default function RoomDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [room, setRoom] = useState<Room | null>(null);
   const [error, setError] = useState("");
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [moveInDate, setMoveInDate] = useState("");
+  const [durationMonths, setDurationMonths] = useState(6);
   const user = getUser();
 
   useEffect(() => {
     if (id) getRoom(Number(id)).then(({ data }) => setRoom(data)).catch((e: unknown) => setError(getErrorMessage(e)));
   }, [id]);
 
-  async function book() {
-    if (!room) return;
-    const date = window.prompt("Ngày dự kiến nhận phòng (YYYY-MM-DD):");
-    if (!date) return;
-    try {
-      await createBooking(room.id, date, "");
-      window.alert("Đã gửi yêu cầu đặt phòng đến chủ nhà.");
-    } catch (e) { setError(getErrorMessage(e)); }
+  function continueToDeposit() {
+    if (!room || !moveInDate) return;
+    navigate("/deposit", {
+      state: { room, moveInDate, durationMonths },
+      replace: false,
+    });
   }
 
   if (error) return <main className="mx-auto max-w-4xl px-5 py-12"><p className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p><Link className="mt-4 inline-block text-brand-700" to="/">Quay lại</Link></main>;
@@ -65,7 +67,7 @@ export default function RoomDetail() {
           <p className="text-sm text-slate-500">Giá thuê mỗi tháng</p>
           <p className="mt-1 text-2xl font-black text-slate-900">{money.format(room.monthlyRent)}</p>
           {user?.role === "TENANT" ? (
-            <button className="primary-button mt-5 w-full" onClick={() => void book()}>Gửi yêu cầu đặt phòng</button>
+            <button className="primary-button mt-5 w-full" onClick={() => setShowBookingModal(true)}>Gửi yêu cầu đặt phòng</button>
           ) : user ? (
             <p className="mt-5 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
               {user.role === "ADMIN"
@@ -79,6 +81,76 @@ export default function RoomDetail() {
           )}
         </aside>
       </div>
+
+      {showBookingModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-[1px]">
+          <div className="w-full max-w-xl rounded-[2rem] bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.2)] md:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Đặt phòng</p>
+                <h2 className="mt-2 text-3xl font-black text-slate-900">{room.title}</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Đóng"
+                onClick={() => setShowBookingModal(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-xl font-bold text-slate-600 transition hover:bg-slate-100"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-700">Ngày dự kiến nhận phòng</span>
+                <input
+                  type="date"
+                  value={moveInDate}
+                  onChange={(event) => setMoveInDate(event.target.value)}
+                  className="form-input !mt-0"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-700">Thời gian đặt trong bao lâu</span>
+                <select
+                  value={durationMonths}
+                  onChange={(event) => setDurationMonths(Number(event.target.value))}
+                  className="form-input !mt-0"
+                >
+                  <option value={1}>1 tháng</option>
+                  <option value={3}>3 tháng</option>
+                  <option value={6}>6 tháng</option>
+                  <option value={12}>12 tháng</option>
+                </select>
+              </label>
+
+              <div className="rounded-[1.25rem] bg-slate-50 p-4">
+                <div className="flex items-center justify-between text-sm text-slate-600">
+                  <span>Giá thuê</span>
+                  <span className="font-semibold text-slate-900">{money.format(room.monthlyRent)}/tháng</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
+                  <span>Thời gian</span>
+                  <span className="font-semibold text-slate-900">{durationMonths} tháng</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button type="button" className="secondary-button" onClick={() => setShowBookingModal(false)}>Hủy</button>
+              <button
+                type="button"
+                className="primary-button"
+                disabled={!moveInDate}
+                onClick={continueToDeposit}
+              >
+                Chuyển qua trang đặt cọc
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
