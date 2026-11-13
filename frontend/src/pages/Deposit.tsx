@@ -1,9 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { createBooking } from "../services/rentify";
 import { getErrorMessage } from "../services/api";
 import type { Room } from "../types";
 
 const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 });
+
+type DepositMode = "FULL" | "HALF";
 
 export default function Deposit() {
   const navigate = useNavigate();
@@ -14,10 +17,17 @@ export default function Deposit() {
     durationMonths?: number;
   };
 
-  const room = bookingInfo.room;
-  const moveInDate = bookingInfo.moveInDate ?? "";
-  const durationMonths = bookingInfo.durationMonths ?? 1;
-  const depositAmount = room ? room.monthlyRent * 1 : 0;
+  const sessionBooking = typeof window !== "undefined" ? sessionStorage.getItem("rentify_booking") : null;
+  const storedBooking = sessionBooking ? (JSON.parse(sessionBooking) as typeof bookingInfo) : null;
+  const room = bookingInfo.room ?? storedBooking?.room;
+  const moveInDate = bookingInfo.moveInDate ?? storedBooking?.moveInDate ?? "";
+  const durationMonths = bookingInfo.durationMonths ?? storedBooking?.durationMonths ?? 1;
+  const [depositMode, setDepositMode] = useState<DepositMode>("HALF");
+
+  const depositAmount = useMemo(() => {
+    if (!room) return 0;
+    return depositMode === "FULL" ? room.monthlyRent * durationMonths : room.monthlyRent * 0.5;
+  }, [depositMode, durationMonths, room]);
 
   async function submit() {
     if (!room || !moveInDate) {
@@ -26,7 +36,8 @@ export default function Deposit() {
     }
 
     try {
-      await createBooking(room.id, moveInDate, `Thuê ${durationMonths} tháng, đặt cọc tiền thuê.`);
+      sessionStorage.removeItem("rentify_booking");
+      await createBooking(room.id, moveInDate, `Thuê ${durationMonths} tháng, đặt cọc ${depositMode === "FULL" ? "toàn bộ" : "một nửa"}.`);
       window.alert("Đã gửi yêu cầu đặt phòng thành công. Chủ nhà sẽ xét duyệt trong thời gian sớm nhất.");
       navigate("/dashboard", { replace: true });
     } catch (error) {
@@ -46,7 +57,7 @@ export default function Deposit() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-10">
+    <main className="mx-auto max-w-5xl px-5 py-10">
       <Link className="text-sm font-bold text-slate-700" to={`/rooms/${room.id}`}>
         ← Quay lại chi tiết phòng
       </Link>
@@ -75,21 +86,47 @@ export default function Deposit() {
                 <span className="text-sm font-semibold text-slate-900">{money.format(room.monthlyRent)}/tháng</span>
               </div>
             </div>
+
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-slate-700">Chọn hình thức đặt cọc</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {[{ value: "HALF", label: "Cọc một nửa", note: "50% giá thuê" }, { value: "FULL", label: "Cọc toàn bộ", note: "100% giá thuê" }].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDepositMode(option.value as DepositMode)}
+                    className={`rounded-[1.25rem] border p-4 text-left transition ${depositMode === option.value ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-800 hover:border-slate-300"}`}
+                  >
+                    <div className="text-sm font-bold">{option.label}</div>
+                    <div className={`mt-1 text-xs ${depositMode === option.value ? "text-slate-200" : "text-slate-500"}`}>{option.note}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           <aside className="border-t border-slate-200 bg-slate-900 p-6 text-white md:border-l md:border-t-0 md:p-8">
-            <p className="text-sm text-slate-300">Số tiền đặt cọc</p>
+            <p className="text-sm text-slate-300">Số tiền cần đặt cọc</p>
             <p className="mt-2 text-4xl font-black">{money.format(depositAmount)}</p>
-            <p className="mt-2 text-sm text-slate-300">Đặt cọc 1 tháng tiền thuê để giữ phòng.</p>
+            <p className="mt-2 text-sm text-slate-300">
+              {depositMode === "HALF" ? "Đặt cọc 50% để giữ phòng và thanh toán tiếp khi nhận nhà." : "Đặt cọc toàn bộ để xử lý hồ sơ nhanh hơn."}
+            </p>
 
-            <div className="mt-8 space-y-3 rounded-[1.5rem] bg-white/5 p-4 text-sm text-slate-200">
-              <div className="flex items-center justify-between">
+            <div className="mt-8 rounded-[1.5rem] bg-white/5 p-4">
+              <div className="flex items-center justify-between text-sm text-slate-200">
                 <span>Phương thức</span>
-                <span className="font-medium text-white">Chuyển khoản</span>
+                <span className="font-medium text-white">VNPAY QR</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Thanh toán</span>
-                <span className="font-medium text-white">Một lần</span>
+              <div className="mt-5 rounded-[1.25rem] border border-dashed border-slate-500 bg-slate-800/60 p-4">
+                <div className="mx-auto grid max-w-[160px] grid-cols-5 gap-1 rounded-xl bg-white p-3">
+                  {Array.from({ length: 25 }).map((_, index) => (
+                    <span
+                      key={index}
+                      className={`h-3 w-3 rounded-sm ${index % 2 === 0 || index % 3 === 0 ? "bg-slate-900" : "bg-slate-200"}`}
+                    />
+                  ))}
+                </div>
+                <p className="mt-4 text-center text-xs uppercase tracking-[0.18em] text-slate-300">Mã QR thanh toán</p>
               </div>
             </div>
 

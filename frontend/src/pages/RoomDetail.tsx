@@ -38,10 +38,8 @@ export default function RoomDetail() {
 
   function continueToDeposit() {
     if (!room || !moveInDate) return;
-    navigate("/deposit", {
-      state: { room, moveInDate, durationMonths },
-      replace: false,
-    });
+    sessionStorage.setItem("rentify_booking", JSON.stringify({ room, moveInDate, durationMonths }));
+    navigate("/deposit", { replace: false });
   }
 
   if (error) return <main className="mx-auto max-w-4xl px-5 py-12"><p className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p><Link className="mt-4 inline-block text-brand-700" to="/">Quay lại</Link></main>;
