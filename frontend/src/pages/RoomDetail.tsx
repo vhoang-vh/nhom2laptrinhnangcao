@@ -7,6 +7,21 @@ import type { Room } from "../types";
 
 const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 });
 
+const roomImages = [
+  "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1460317442991-0ec209397118?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+];
+
+function getRoomImage(room: Room) {
+  const index = (room.id + room.title.length) % roomImages.length;
+  return roomImages[index];
+}
+
 export default function RoomDetail() {
   const { id } = useParams();
   const [room, setRoom] = useState<Room | null>(null);
@@ -29,15 +44,26 @@ export default function RoomDetail() {
 
   if (error) return <main className="mx-auto max-w-4xl px-5 py-12"><p className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p><Link className="mt-4 inline-block text-brand-700" to="/">Quay lại</Link></main>;
   if (!room) return <main className="mx-auto max-w-4xl px-5 py-12 text-slate-500">Đang tải thông tin phòng...</main>;
+
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Link className="text-sm font-bold text-brand-700" to="/">← Tất cả phòng</Link>
-      <div className="mt-5 h-64 rounded-3xl bg-gradient-to-br from-teal-100 via-emerald-50 to-amber-100" />
+      <Link className="text-sm font-bold text-slate-700" to="/">← Tất cả phòng</Link>
+      <div className="mt-5 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+        <img src={getRoomImage(room)} alt={room.title} className="h-72 w-full object-cover md:h-96" />
+      </div>
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_320px]">
-        <section><span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">{room.area}</span><h1 className="mt-4 text-3xl font-black">{room.title}</h1><p className="mt-2 text-slate-500">{room.address}</p><h2 className="mt-8 text-xl font-extrabold">Thông tin phòng</h2><p className="mt-3 leading-7 text-slate-600">{room.description || "Chủ nhà chưa thêm mô tả."}</p><p className="mt-4 text-slate-600">Diện tích: <strong>{room.areaSquareMeters} m²</strong></p><p className="mt-2 text-slate-600">Chủ nhà: <strong>{room.landlordName}</strong></p></section>
-        <aside className="h-fit rounded-2xl border border-slate-100 bg-white p-6 shadow-card">
+        <section>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">{room.area}</span>
+          <h1 className="mt-4 text-3xl font-black text-slate-900">{room.title}</h1>
+          <p className="mt-2 text-slate-500">{room.address}</p>
+          <h2 className="mt-8 text-xl font-extrabold text-slate-900">Thông tin phòng</h2>
+          <p className="mt-3 leading-7 text-slate-600">{room.description || "Chủ nhà chưa thêm mô tả."}</p>
+          <p className="mt-4 text-slate-600">Diện tích: <strong>{room.areaSquareMeters} m²</strong></p>
+          <p className="mt-2 text-slate-600">Chủ nhà: <strong>{room.landlordName}</strong></p>
+        </section>
+        <aside className="h-fit rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
           <p className="text-sm text-slate-500">Giá thuê mỗi tháng</p>
-          <p className="mt-1 text-2xl font-black text-brand-700">{money.format(room.monthlyRent)}</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{money.format(room.monthlyRent)}</p>
           {user?.role === "TENANT" ? (
             <button className="primary-button mt-5 w-full" onClick={() => void book()}>Gửi yêu cầu đặt phòng</button>
           ) : user ? (
