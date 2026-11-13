@@ -35,7 +35,23 @@ export default function RoomDetail() {
       <div className="mt-5 h-64 rounded-3xl bg-gradient-to-br from-teal-100 via-emerald-50 to-amber-100" />
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_320px]">
         <section><span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-bold text-emerald-700">{room.area}</span><h1 className="mt-4 text-3xl font-black">{room.title}</h1><p className="mt-2 text-slate-500">{room.address}</p><h2 className="mt-8 text-xl font-extrabold">Thông tin phòng</h2><p className="mt-3 leading-7 text-slate-600">{room.description || "Chủ nhà chưa thêm mô tả."}</p><p className="mt-4 text-slate-600">Diện tích: <strong>{room.areaSquareMeters} m²</strong></p><p className="mt-2 text-slate-600">Chủ nhà: <strong>{room.landlordName}</strong></p></section>
-        <aside className="h-fit rounded-2xl border border-slate-100 bg-white p-6 shadow-card"><p className="text-sm text-slate-500">Giá thuê mỗi tháng</p><p className="mt-1 text-2xl font-black text-brand-700">{money.format(room.monthlyRent)}</p>{user?.role === "TENANT" ? <button className="primary-button mt-5 w-full" onClick={() => void book()}>Gửi yêu cầu đặt phòng</button> : <Link className="primary-button mt-5 block text-center" to="/login">Đăng nhập để đặt phòng</Link>}</aside>
+        <aside className="h-fit rounded-2xl border border-slate-100 bg-white p-6 shadow-card">
+          <p className="text-sm text-slate-500">Giá thuê mỗi tháng</p>
+          <p className="mt-1 text-2xl font-black text-brand-700">{money.format(room.monthlyRent)}</p>
+          {user?.role === "TENANT" ? (
+            <button className="primary-button mt-5 w-full" onClick={() => void book()}>Gửi yêu cầu đặt phòng</button>
+          ) : user ? (
+            <p className="mt-5 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-600">
+              {user.role === "ADMIN"
+                ? "Tài khoản quản trị không gửi yêu cầu đặt phòng."
+                : "Chủ nhà quản lý yêu cầu thuê trong trang quản lý."}
+              {" "}
+              <Link className="font-bold text-brand-700" to="/dashboard">Về trang quản lý</Link>
+            </p>
+          ) : (
+            <Link className="primary-button mt-5 block text-center" to="/login">Đăng nhập để đặt phòng</Link>
+          )}
+        </aside>
       </div>
     </main>
   );
