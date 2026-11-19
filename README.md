@@ -11,26 +11,26 @@
 - JDK 17 trở lên
 - Maven 3.8 trở lên
 - Node.js 20 trở lên và npm
-- Docker Desktop (cách chạy MySQL được khuyến nghị) hoặc MySQL 8.0+
+- Docker Desktop với Docker Compose
 
 ## Khởi chạy nhanh
 
-1. Khởi tạo database:
+1. Khởi chạy API và MySQL bằng Docker:
 
    ```powershell
-   docker compose up -d mysql
-   ```
-
-2. Chạy API tại thư mục gốc:
-
-   ```powershell
-   mvn spring-boot:run
+   docker compose up --build -d
    ```
 
    API mặc định ở `http://localhost:8080`; giao diện Swagger ở
-   `http://localhost:8080/swagger-ui.html`.
+   `http://localhost:8080/swagger-ui.html`. MySQL chạy trong container và dữ liệu
+   được lưu trong volume `rentify-mysql-data`.
 
-3. Chạy SPA:
+   Để dừng các container:
+   ```powershell
+   docker compose down
+   ```
+
+2. Chạy SPA:
 
    ```powershell
    cd frontend
@@ -41,18 +41,26 @@
 
    Mở `http://localhost:5173`.
 
-### Chạy xem thử không cần cài MySQL
+### Chạy API ngoài Docker
 
-Có thể chạy backend bằng cơ sở dữ liệu H2 trong bộ nhớ và dữ liệu phòng mẫu:
+Nếu muốn chạy backend bằng Maven trên máy, trước tiên khởi chạy MySQL trong Docker:
+
+```powershell
+docker compose up -d mysql
+mvn spring-boot:run
+```
+
+Để chạy với dữ liệu phòng mẫu, dùng profile demo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\run-demo.ps1
 ```
 
-Chế độ này tạo một chủ nhà và một số phòng mẫu khi khởi động; dữ liệu sẽ bị xóa khi
-backend dừng. Tài khoản chủ nhà mẫu: `chunha@rentify.local` / `Landlord123!`.
-Script dùng đường dẫn junction tạm thời để hỗ trợ thư mục dự án có ký tự `;`, tránh
-ký tự này bị Maven hiểu nhầm là dấu phân tách classpath trên Windows.
+Profile demo cũng sử dụng MySQL trong Docker. Tài khoản chủ nhà mẫu:
+`chunha@rentify.local` / `Landlord123!`; dữ liệu được lưu trong volume MySQL và
+không bị xóa khi backend dừng. Script dùng đường dẫn junction tạm thời để hỗ trợ
+thư mục dự án có ký tự `;`, tránh ký tự này bị Maven hiểu nhầm là dấu phân tách
+classpath trên Windows.
 
 Frontend đọc URL API từ `VITE_API_URL`. Backend nhận kết nối trình duyệt từ
 `http://localhost:5173`; có thể đổi `APP_CORS_ALLOWED_ORIGINS` thành danh sách origin
@@ -75,8 +83,9 @@ Trước khi chia sẻ hoặc triển khai, hãy cấu hình biến môi trườ
 | `APP_CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Origin frontend được phép |
 
 Admin được tạo tự động khi ứng dụng khởi động nếu email cấu hình chưa tồn tại.
-Profile demo có khóa JWT và tài khoản mẫu riêng để chạy cục bộ; không dùng thông tin demo
-hoặc `ddl-auto: update` trong môi trường production. `ddl-auto: update` được bật để thuận tiện cho đồ án.
+Profile demo có khóa JWT và tài khoản mẫu riêng; không dùng thông tin demo hoặc
+`ddl-auto: update` trong môi trường production. `ddl-auto: update` được bật để
+thuận tiện cho đồ án.
 
 Đăng ký tenant được duyệt tự động. Đăng ký landlord tạo tài khoản chờ duyệt; chỉ sau khi
 admin duyệt tài khoản, chủ nhà mới có thể đăng nhập.

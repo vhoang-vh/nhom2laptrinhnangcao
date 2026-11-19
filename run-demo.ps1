@@ -26,6 +26,10 @@ New-Item -ItemType Junction -Path $safeProjectPath -Target $projectRoot | Out-Nu
 $exitCode = 1
 try {
     Push-Location $safeProjectPath
+    & docker compose up -d mysql
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to start the MySQL database with Docker Compose."
+    }
     & $mavenPath spring-boot:run "-Dspring-boot.run.profiles=demo"
     $exitCode = $LASTEXITCODE
 } finally {

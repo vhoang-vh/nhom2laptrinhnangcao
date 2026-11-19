@@ -1,20 +1,42 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rentify-api
+    environment:
+      PORT: 8080
+      DB_URL: jdbc:mysql://mysql:3306/rentify?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: ${DB_USERNAME:-rentify}
+      DB_PASSWORD: ${DB_PASSWORD:-rentify}
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-before-production}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@rentify.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin123!ChangeMe}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.4
     container_name: rentify-mysql
     environment:
       MYSQL_DATABASE: rentify
-      MYSQL_USER: rentify
-      MYSQL_PASSWORD: rentify
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: ${DB_USERNAME:-rentify}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-rentify}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
       - "3306:3306"
     volumes:
       - rentify-mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
+
 volumes:
   rentify-mysql-data:
